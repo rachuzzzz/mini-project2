@@ -14,25 +14,32 @@
       padding: 0;
     }
 
-    header {
+    .navbar {
       background-color: white;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 100%;
       position: fixed;
       top: 0;
-      width: 100%;
+      left: 0;
       z-index: 1000;
+      animation: slideIn 0.5s ease-in-out;
     }
 
     .navbar-brand img {
-      height: 45px;
+      height: 35px;
+    }
+
+    .navbar .ms-auto {
+      display: flex;
+      gap: 15px;
     }
 
     .main-content {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: calc(100vh - 80px); /* Adjust for navbar height */
-      padding: 100px 20px 20px; /* Push the form down */
+      min-height: calc(100vh - 80px);
+      padding: 100px 20px 20px;
     }
 
     .form-container {
@@ -90,46 +97,49 @@
         max-width: 90%;
       }
     }
+
+    @keyframes slideIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <nav class="navbar navbar-expand-lg">
-      <div class="container">
-        <a class="navbar-brand" href="index.html">
-          <img src="logos.png" alt="UrbanUnity Logo">
-        </a>
-        <div class="ms-auto">
-          <a href="clogin3.html" class="btn btn-link">Citizen Login</a>
-          <a href="alogin.html" class="btn btn-primary">Government Login</a>
-        </div>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid d-flex justify-content-between">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <img src="{{ url_for('static', filename='logos.png') }}" alt="UrbanUnity Logo">
+    </a>    
+      <div class="ms-auto d-flex gap-3">
+        <a href="{{ url_for('citizen_login') }}" class="btn btn-link">Citizen Login</a>
+<a href="{{ url_for('admin_login') }}" class="btn btn-primary">Government Login</a>
       </div>
-    </nav>
-  </header>
+    </div>
+  </nav>
 
   <div class="main-content">
     <div class="form-container">
       <form id="contractorSignupForm" onsubmit="return validateForm()">
         <h1 class="form-title">Contractor Signup</h1>
         <p class="form-subtitle">Please enter your details to continue</p>
-
+        
         <label for="first-name">First Name</label>
         <input type="text" id="first-name" placeholder="First Name" required>
         <span id="first-name-error" class="error"></span>
-
+        
         <label for="last-name">Last Name</label>
         <input type="text" id="last-name" placeholder="Last Name" required>
         <span id="last-name-error" class="error"></span>
-
+        
         <label for="phone">Phone Number</label>
         <input type="text" id="phone" placeholder="Phone Number" required>
         <span id="phone-error" class="error"></span>
-
+        
         <label for="email">Email ID</label>
         <input type="email" id="email" placeholder="Email ID" required>
         <span id="email-error" class="error"></span>
-
+        
         <label for="services">Services Provided</label>
         <select id="services" required>
           <option value="" disabled selected>Select a service</option>
@@ -139,22 +149,10 @@
         </select>
         <span id="services-error" class="error"></span>
 
-        <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Username" required>
-        <span id="username-error" class="error"></span>
-
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Password" required>
-        <span id="password-error" class="error"></span>
-
-        <label for="retype-password">Retype Password</label>
-        <input type="password" id="retype-password" placeholder="Retype Password" required>
-        <span id="retype-password-error" class="error"></span>
-
         <button type="submit">Sign Up</button>
       </form>
       <div class="help-text">
-        <p>Already a user? <a href="blogin.html">Log in</a></p>
+        <p>Already a user? <a href="{{ url_for('contractor_login') }}">Log in</a></p>
       </div>
     </div>
   </div>
