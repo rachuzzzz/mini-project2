@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Issues - Urban Unity</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .navbar {
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1050;
+    }
+
+    .vertical-nav {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      width: 250px;
+      height: calc(100vh - 70px);
+      background-color: #ffffff;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      padding-top: 10px;
+      overflow-y: auto;
+    }
+
+    .vertical-nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .vertical-nav ul li {
+      padding: 15px 20px;
+      margin: 5px;
+      border-radius: 5px;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+
+    .vertical-nav ul li a {
+      text-decoration: none;
+      font-size: 16px;
+      display: block;
+      font-weight: bold;
+    }
+
+    .vertical-nav ul li:hover {
+      background-color: #f8f9fa;
+    }
+
+    .content {
+      padding-top: 80px;
+      padding-left: 270px;
+      overflow-x: auto;
+    }
+
+    .dashboard-container {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .issue-card {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .issue-card.reported {
+      background-color: #fff3cd;
+      border-left: 5px solid orange;
+    }
+
+    .issue-card.resolved {
+      background-color: #d4edda;
+      border-left: 5px solid green;
+    }
+
+    .issue-card .status {
+      font-weight: bold;
+    }
+
+    .issue-card .details {
+      font-size: 14px;
+    }
+
+    .filter-container {
+      margin-bottom: 20px;
+    }
+
+    .filter-container select {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .filter-container button {
+      padding: 5px 10px;
+      margin-left: 10px;
+      background-color: #007bff;
+      color: #ffffff;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .filter-container button:hover {
+      background-color: #0056b3;
+    }
+
+    .assign-button {
+      background-color: #007bff;
+      color: #ffffff;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .assign-button:hover {
+      background-color: #0056b3;
+    }
+
+    .assign-dropdown {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      margin-right: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .vertical-nav {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      .content {
+        padding-left: 0;
+        padding-top: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <img src="logos.png" alt="UrbanUnity Logo" height="45">
+      </a>
+    </div>
+  </nav>
+
+  <div class="vertical-nav">
+    <ul>
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="#">Manage Issues</a></li>
+      <li><a href="#">Contractor Assignments</a></li>
+      <li><a href="#">Reports & Analytics</a></li>
+      <li><a href="#">Settings</a></li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <div class="dashboard-container">
+      <h2>Manage Reported Issues</h2>
+      <p>Below are the reported issues. You can filter, assign, and resolve them as needed.</p>
+
+      <!-- Filter Section -->
+      <div class="filter-container">
+        <select>
+          <option value="all">All Issues</option>
+          <option value="reported">Reported Issues</option>
+          <option value="resolved">Resolved Issues</option>
+          <option value="emergency">Emergency Issues</option>
+        </select>
+        <button>Filter</button>
+      </div>
+
+      <!-- Issues List -->
+      <div id="reported-issues">
+        <div class="issue-card reported">
+          <div>
+            <span class="status">Reported</span>
+            <p class="details">Broken streetlight on Elm Street. Reported by: John Doe</p>
+          </div>
+          <div class="actions">
+            <select class="assign-dropdown">
+              <option value="contractor1">Contractor 1</option>
+              <option value="contractor2">Contractor 2</option>
+              <option value="contractor3">Contractor 3</option>
+            </select>
+            <button class="assign-button">Assign</button>
+            <button class="btn btn-success btn-sm">Mark as Resolved</button>
+          </div>
+        </div>
+        <div class="issue-card reported">
+          <div>
+            <span class="status">Reported</span>
+            <p class="details">Pothole on Maple Avenue causing traffic issues. Reported by: Jane Smith</p>
+          </div>
+          <div class="actions">
+            <select class="assign-dropdown">
+              <option value="contractor1">Contractor 1</option>
+              <option value="contractor2">Contractor 2</option>
+              <option value="contractor3">Contractor 3</option>
+            </select>
+            <button class="assign-button">Assign</button>
+            <button class="btn btn-success btn-sm">Mark as Resolved</button>
+          </div>
+        </div>
+        <div class="issue-card resolved">
+          <div>
+            <span class="status">Resolved</span>
+            <p class="details">Water leakage near City Park. Resolved by: XYZ Construction</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" disabled>Completed</button>
+        </div>
+        <div class="issue-card reported">
+          <div>
+            <span class="status">Reported</span>
+            <p class="details">Garbage overflow near Market Square. Reported by: Mark Lee</p>
+          </div>
+          <div class="actions">
+            <select class="assign-dropdown">
+              <option value="contractor1">Contractor 1</option>
+              <option value="contractor2">Contractor 2</option>
+              <option value="contractor3">Contractor 3</option>
+            </select>
+            <button class="assign-button">Assign</button>
+            <button class="btn btn-success btn-sm">Mark as Resolved</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

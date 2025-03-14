@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urban Unity Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .navbar {
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1050;
+    }
+
+    .navbar-brand img {
+      height: 45px;
+    }
+
+    .btn-outline-primary {
+      color: #005bb5;
+      border: 1px solid #005bb5;
+      background-color: transparent;
+    }
+
+    .btn-outline-primary:hover {
+      background-color: #005bb5;
+      color: #ffffff;
+    }
+
+    .btn-primary {
+      background-color: #005bb5;
+      color: #ffffff;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: #003f8a;
+      color: #ffffff;
+    }
+
+    .vertical-nav {
+      position: fixed;
+      top: 70px; /* Start below the horizontal navbar */
+      left: 0;
+      width: 250px;
+      height: calc(100vh - 70px); /* Fill remaining height */
+      background-color: #f8f9fa;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      z-index: 1040;
+    }
+
+    .vertical-nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .vertical-nav ul li {
+      padding: 15px 20px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .vertical-nav ul li a {
+      text-decoration: none;
+      color: #005bb5;
+      font-size: 16px;
+    }
+
+    .content {
+      padding-top: 70px;
+      padding-left: 260px; /* Account for the fixed vertical navbar width */
+    }
+
+    .slider-container {
+      width: 100%; /* Slider will take full remaining width */
+      max-width: 100%; /* Ensure no overflow */
+      margin: 0 auto;
+    }
+
+    .carousel-inner {
+      width: 100%; /* Fill the full container width */
+    }
+
+    .carousel-item img {
+      width: 100%; /* Fill the full width of the container */
+      height: 60vh; /* Set a fixed height relative to the viewport */
+      object-fit: cover; /* Ensure the image scales and covers the area */
+    }
+
+    /* Transparent background for carousel captions */
+    .carousel-caption {
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+  color: white; /* White text for better contrast */
+  padding: 15px;
+  position: absolute; /* Position the caption over the image */
+  bottom: 0; /* Position the caption at the bottom */
+  left: 0; /* Align to the left */
+  right: 0; /* Align to the right */
+  width: 100%; /* Ensure it takes the full width */
+  text-align: center; /* Center the text inside */
+  border-radius: 5px;
+}
+
+
+  </style>
+</head>
+<body>
+
+  <!-- Horizontal Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand ms-1" href="#">
+        <img src="logos.png" alt="UrbanUnity Logo">
+      </a>
+      <div class="ms-auto d-flex">
+        <a href="volunteer_reg.html" class="btn btn-outline-primary me-2">Register as Volunteer</a>
+        <a href="#" class="btn btn-primary">
+          <i class="bi bi-plus"></i> Report Issue
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Fixed Vertical Navbar -->
+  <div class="vertical-nav">
+    <ul>
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="#">Submit Requests</a></li>
+      <li><a href="#">Event Updates</a></li>
+      <li><a href="#">Service Tracking</a></li>
+      <li><a href="#">Community Feedback</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <!-- Slider Container -->
+    <div class="slider-container">
+      <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          <!-- First Slide -->
+          <div class="carousel-item active">
+            <img src="image1.png" class="d-block w-100" alt="Slide 1">
+            <div class="carousel-caption d-none d-md-block">
+              <h5>Improving Road Infrastructure for Better Connectivity</h5>
+              <p>Watch as we enhance road quality to ensure smoother and safer commutes. UrbanUnity is committed to upgrading our city’s roads to improve accessibility and mobility for all citizens.</p>
+            </div>
+          </div>
+          <!-- Second Slide -->
+          <div class="carousel-item">
+            <img src="image2.png" class="d-block w-100" alt="Slide 2">
+            <div class="carousel-caption d-none d-md-block">
+              <h5>Lighting Up Our Community</h5>
+              <p>Ensuring brighter streets and safer nights, one light at a time. UrbanUnity is dedicated to maintaining well-lit spaces for all.</p>
+            </div>
+          </div>
+          <!-- Third Slide -->
+          <div class="carousel-item">
+            <img src="image3.png" class="d-block w-100" alt="Slide 3">
+            <div class="carousel-caption d-none d-md-block">
+              <h5>Sealing the Gaps for Smoother Journeys!</h5>
+              <p>Working to eliminate road cracks and gaps, ensuring a safer and more comfortable drive for all. UrbanUnity is committed to keeping our roads in top condition.</p>
+            </div>
+          </div>
+        </div>
+        <!-- Carousel Controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
