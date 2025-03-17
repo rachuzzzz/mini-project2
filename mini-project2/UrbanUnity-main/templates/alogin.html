@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: url("{{ url_for('static', filename='gbanner.jpg') }}") no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='images/gbanner.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       height: 100vh;
       margin: 0;
@@ -124,17 +124,17 @@
     <div class="container-fluid d-flex justify-content-between">
       <a class="navbar-brand" href="{{ url_for('home') }}">
         <img src="{{ url_for('static', filename='logos.png') }}" alt="UrbanUnity Logo">
-    </a>    
+      </a>
       <div class="ms-auto d-flex gap-3">
         <a href="{{ url_for('citizen_login') }}" class="btn btn-link">Citizen Login</a>
-        <a href="{{ url_for('contractor_login') }}" class="btn btn-primary">Contractor Login</a>        
+        <a href="{{ url_for('contractor_login') }}" class="btn btn-primary">Contractor Login</a>
       </div>
     </div>
   </nav>
 
   <div class="content">
     <div class="form-container">
-      <img src="{{ url_for('static', filename='gov.jpg') }}" alt="Admin Logo">
+      <img src="{{ url_for('static', filename='images/gov.jpg') }}" alt="Admin Logo">
       <h1>Admin Login</h1>
       <form id="governmentLoginForm" onsubmit="return validateForm()">
         <input type="text" id="adm-id" placeholder="Admin ID" required>
