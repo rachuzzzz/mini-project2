@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: url('cbanner.jpg') no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='images/cbanner.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       height: 100vh;
       margin: 0;
@@ -18,15 +18,16 @@
     .navbar {
       background-color: white;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 100%;
       position: fixed;
       top: 0;
-      width: 100%;
+      left: 0;
       z-index: 1000;
       animation: slideIn 0.5s ease-in-out;
     }
 
     .navbar-brand img {
-      height: 45px;
+      height: 35px;
     }
 
     .content {
@@ -34,14 +35,14 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      padding-top: 80px; /* Adjusted for navbar height */
+      padding-top: 100px;
     }
 
     .form-container {
       background-color: rgba(255, 255, 255, 0.9);
-      padding: 30px 40px;
+      padding: 30px;
       border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       max-width: 400px;
       width: 100%;
       text-align: center;
@@ -103,40 +104,30 @@
       from { transform: translateY(-50px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-
-    @media screen and (max-width: 600px) {
-      .form-container {
-        padding: 20px;
-        max-width: 90%;
-      }
-
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      .help-text {
-        font-size: 12px;
-      }
-    }
   </style>
 </head>
 <body>
 
   <nav class="navbar navbar-expand-lg">
-    <div class="container">
-      <a class="navbar-brand" href="index.html">
-        <img src="logos.png" alt="UrbanUnity Logo">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <img src="{{ url_for('static', filename='logos.png') }}" alt="UrbanUnity Logo">
       </a>
-      <div class="ms-auto">
-        <a href="blogin.html" class="btn btn-link">Contractor Login</a>
-        <a href="alogin.html" class="btn btn-primary">Admin Login</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="ms-auto d-flex gap-2">
+          <a href="{{ url_for('contractor_login') }}" class="btn btn-link">Contractor Login</a>
+          <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Admin Login</a>
+        </div>
       </div>
     </div>
   </nav>
 
   <div class="content">
     <div class="form-container">
-      <img src="cit.png" alt="Citizen Logo">
+      <img src="{{ url_for('static', filename='images/cit.png') }}" alt="Citizen Logo">
       <h1>Citizen Login</h1>
       <form id="citizenLoginForm" onsubmit="return validateForm()">
         <input type="text" id="username" placeholder="Username" required>
@@ -144,7 +135,7 @@
         <button type="submit">Login</button>
       </form>
       <div class="help-text">
-        <p>New user? <a href="clogin2.html">Sign up</a></p>
+        <p>New user? <a href="{{ url_for('signup') }}">Sign up</a></p>
       </div>
     </div>
   </div>

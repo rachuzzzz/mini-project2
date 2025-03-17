@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: url('cbanner.jpg') no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='images/cbanner.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       margin: 0;
       height: 100vh;
@@ -135,16 +135,16 @@
 
   <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{{ url_for('/') }}">
-        <img src="{{ url_for('static', filename='images/logos.png') }}" alt="UrbanUnity Logo">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <img src="{{ url_for('static', filename='logos.png') }}" alt="UrbanUnity Logo">
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <div class="ms-auto d-flex gap-2">
-          <a href="{{ url_for('contractor_login') }}"class="btn btn-link">Contractor Login</a>
-          <a href="{{ url_for('admin_login') }}"class="btn btn-primary">Admin Login</a>
+          <a href="{{ url_for('contractor_login') }}" class="btn btn-link">Contractor Login</a>
+          <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Admin Login</a>
         </div>
       </div>
     </div>
@@ -152,7 +152,7 @@
 
   <div class="content">
     <div class="form-container">
-      <form id="citizenSignupForm" onsubmit="return validateForm()">
+      <form id="citizenSignupForm" action="{{ url_for('signup') }}" method="POST" onsubmit="return validateForm()">
         <h1 class="form-title">Citizen Signup</h1>
         <p class="form-subtitle">Please enter your details to continue</p>
 
