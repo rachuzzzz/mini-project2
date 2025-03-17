@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: url('road.jpg') no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='images/road.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       margin: 0;
       padding: 0;
@@ -110,10 +110,10 @@
     <div class="container-fluid d-flex justify-content-between">
       <a class="navbar-brand" href="{{ url_for('home') }}">
         <img src="{{ url_for('static', filename='logos.png') }}" alt="UrbanUnity Logo">
-    </a>    
+      </a>
       <div class="ms-auto d-flex gap-3">
         <a href="{{ url_for('citizen_login') }}" class="btn btn-link">Citizen Login</a>
-<a href="{{ url_for('admin_login') }}" class="btn btn-primary">Government Login</a>
+        <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Government Login</a>
       </div>
     </div>
   </nav>

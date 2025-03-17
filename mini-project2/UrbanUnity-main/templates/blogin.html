@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: url('road.jpg') no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='images/road.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       height: 100vh;
       margin: 0;
@@ -140,7 +140,7 @@
     <div class="container-fluid">
       <a class="navbar-brand" href="{{ url_for('home') }}">
         <img src="{{ url_for('static', filename='logos.png') }}" alt="UrbanUnity Logo">
-    </a>    
+      </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
