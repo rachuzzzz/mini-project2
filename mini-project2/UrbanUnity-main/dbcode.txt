@@ -1,0 +1,80 @@
+CREATE DATABASE urbanunity;
+USE urbanunity;
+
+-- Citizens Table
+CREATE TABLE citizens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    phone_number VARCHAR(15) UNIQUE NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,  -- Hashed password storage
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Contractors Table
+CREATE TABLE contractors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    phone_number VARCHAR(15) UNIQUE NOT NULL,
+    email_id VARCHAR(100) UNIQUE NOT NULL,
+    services_provided TEXT NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,  -- Hashed password storage
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Government Admins Table
+CREATE TABLE government (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    government_id VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,  -- Hashed password
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Grievances Table (Citizen Issue Reporting)
+CREATE TABLE grievances (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,  -- Foreign key linking to citizens table
+    location VARCHAR(255) NOT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    description TEXT NOT NULL,
+    phone VARCHAR(15) NOT NULL,
+    photo_path VARCHAR(255),  -- Stores the file path of uploaded photos
+    status ENUM('Pending', 'In Progress', 'Resolved') DEFAULT 'Pending',
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES citizens(id) ON DELETE CASCADE
+);
+
+-- Services Table (City Services)
+CREATE TABLE services (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    service_name VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    status ENUM('Active', 'Inactive', 'Completed') DEFAULT 'Active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Community Feedback Table
+CREATE TABLE feedback (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    feedback_text TEXT NOT NULL,
+    rating INT CHECK (rating BETWEEN 1 AND 5),  -- Rating from 1 to 5
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES citizens(id) ON DELETE CASCADE
+);
+
+-- Events Table (City Event Updates)
+CREATE TABLE events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_name VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    event_date DATETIME NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

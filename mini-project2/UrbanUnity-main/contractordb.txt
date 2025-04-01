@@ -1,0 +1,21 @@
+INSERT INTO contractors (first_name, last_name, phone_number, email_id, services_provided, username, password, created_at) 
+VALUES 
+('Arun', 'Nair', '9876543210', 'arun.nair@keralaroadworks.com', 'Road Repair', 'arunnair', '$2b$12$y8eB7sdGKvQ8F2/XoCMU8e8OAI0k9GmCDY7lMIoV./oBeT', NOW()),
+
+('Deepa', 'Menon', '9867452301', 'deepa.menon@ksebservices.com', 'Electrical Maintenance', 'deepamenon', '$2b$12$D2KPJ8jbxhBk3UtPYDlsyeSAZTQfdHs6DDwJltPGw/BGp.', NOW()),
+
+('Shyam', 'Krishnan', '9988776655', 'shyam.krishnan@cochinfra.com', 'Plumbing Services', 'shyamkrishnan', '$2b$12$TYd/jS92PaL7M1FD./ILH.sZtPL4qB1/Vlnf9v6Q5K0mA', NOW()),
+
+('Lakshmi', 'Pillai', '9876543201', 'lakshmi.pillai@greenwastemanagement.com', 'Waste Management', 'lakshmipillai', '$2b$12$XfFZ7FG8OQ5r7jFb1KvT2uI5x.7dQJjjN7R2FhX4/1KBe', NOW()),
+
+('Vishnu', 'Das', '9765432109', 'vishnu.das@kochiurbanlighting.com', 'Street Lighting', 'vishnudas', '$2b$12$LlVZ8Ey9B6Q8mO/h4.NUKs06XKgWFlDkN45rCqLtTYMoe', NOW());
+
+known hash 
+UPDATE contractors 
+SET password = '$2b$12$E.7X/xhRNo7L/mLq7k1o5uF2G8BDezwn./XGmVxCNK/B5zq'
+WHERE username = 'arunnair';
+
+
+*********************
+username:arunnair
+pass:test1234

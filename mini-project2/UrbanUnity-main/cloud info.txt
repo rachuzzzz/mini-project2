@@ -1,0 +1,3 @@
+cloud name: dsno14dv8
+api key: 493755698581822
+api secret: QGuxpP9GMQ6XYmI_04FeAg3v0VQ
