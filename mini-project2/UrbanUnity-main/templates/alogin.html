@@ -134,16 +134,17 @@
 
   <div class="content">
     <div class="form-container">
-      <img src="{{ url_for('static', filename='images/gov.jpg') }}" alt="Admin Logo">
-      <h1>Admin Login</h1>
-      <form id="governmentLoginForm" onsubmit="return validateForm()">
-        <input type="text" id="adm-id" placeholder="Admin ID" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-      </form>
-      <div class="help-text"></div>
+        <img src="{{ url_for('static', filename='images/gov.jpg') }}" alt="Admin Logo">
+        <h1>Admin Login</h1>
+        <form id="governmentLoginForm" action="{{ url_for('admin_login') }}" method="POST" onsubmit="return validateForm()">
+            <input type="text" id="adm-id" name="government_id" placeholder="Admin ID" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <div class="help-text"></div>  <!-- Ensure JS updates this for validation errors -->
     </div>
-  </div>
+</div>
+
 
   <script>
     function validateForm() {

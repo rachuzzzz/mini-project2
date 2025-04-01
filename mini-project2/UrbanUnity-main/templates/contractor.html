@@ -21,6 +21,7 @@
       top: 0;
       width: 100%;
       z-index: 1050;
+      border-bottom: 1px solid #ccc;
     }
 
     .vertical-nav {
@@ -33,6 +34,7 @@
       box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
       padding-top: 10px;
       overflow-y: auto;
+      border-right: 1px solid #ccc;
     }
 
     .vertical-nav ul {
@@ -50,14 +52,17 @@
     }
 
     .vertical-nav ul li a {
-      text-decoration: none;
-      font-size: 16px;
       display: block;
-      font-weight: bold;
+      background-color: #007bff;
+      color: #ffffff;
+      padding: 10px 15px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-bottom: 5px;
     }
 
-    .vertical-nav ul li:hover {
-      background-color: #f8f9fa;
+    .vertical-nav ul li a:hover {
+      background-color: #0056b3;
     }
 
     .content {
@@ -75,30 +80,52 @@
 
     .task-card {
       border: 1px solid #ddd;
-      padding: 10px;
-      margin: 10px 0;
+      padding: 15px;
+      margin: 15px 0;
       border-radius: 5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
 
-    .task-card.active {
-      background-color: #d1ecf1;
-      border-left: 5px solid #17a2b8;
+    .task-card.in-progress {
+      background-color: #fff3cd;
+      border-left: 5px solid #ffc107;
     }
 
     .task-card.completed {
       background-color: #d4edda;
-      border-left: 5px solid green;
+      border-left: 5px solid #28a745;
     }
 
-    .task-card .status {
+    .task-card.pending {
+      background-color: #f8f9fa;
+      border-left: 5px solid #6c757d;
+    }
+
+    .stats-container {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    .stats-card {
+      flex: 1;
+      min-width: 200px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    .stats-card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .stats-card .number {
+      font-size: 2rem;
       font-weight: bold;
-    }
-
-    .task-card .details {
-      font-size: 14px;
+      color: #007bff;
     }
 
     .filter-container {
@@ -106,13 +133,13 @@
     }
 
     .filter-container select {
-      padding: 5px;
+      padding: 8px;
       border-radius: 5px;
       border: 1px solid #ddd;
     }
 
     .filter-container button {
-      padding: 5px 10px;
+      padding: 8px 15px;
       margin-left: 10px;
       background-color: #007bff;
       color: #ffffff;
@@ -139,89 +166,195 @@
 </head>
 <body>
   <nav class="navbar navbar-expand-lg">
-    <div class="container">
+    <div class="container-fluid">
       <a class="navbar-brand" href="#">
-        <img src="logos.png" alt="UrbanUnity Logo" height="45">
+        <img src="{{ url_for('static', filename='images/logos.png') }}" alt="UrbanUnity Logo" height="45">
       </a>
+      <div class="ml-auto">
+        <span class="navbar-text">
+          <i class="bi bi-person-circle"></i> {{ username }}
+        </span>
+      </div>
     </div>
   </nav>
 
   <div class="vertical-nav">
     <ul>
-      <li><a href="#">Dashboard</a></li>
-      <li><a href="#">Active Jobs</a></li>
-      <li><a href="#">Completed Tasks</a></li>
-      <li><a href="#">Assigned Tasks</a></li>
-      <li><a href="#">Reports</a></li>
+      <li><a href="#dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+      <li><a href="#assigned"><i class="bi bi-list-task"></i> Assigned Tasks</a></li>
+      <li><a href="#completed"><i class="bi bi-check-circle"></i> Completed Tasks</a></li>
+      <li><a href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
     </ul>
   </div>
 
   <div class="content">
     <div class="dashboard-container">
-      <h2>Contractor Dashboard</h2>
-      <p>Welcome, [Contractor Name]. Below are the tasks you are working on or have completed.</p>
 
+      {% if revision_requests|length > 0 %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle"></i> 
+      <strong>{{ revision_requests|length }} task(s)</strong> require revision based on government feedback.
+      <a href="#revision-tasks" class="btn btn-sm btn-warning ms-3">View Tasks</a>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+      <h2 id="dashboard"><i class="bi bi-speedometer2"></i> Contractor Dashboard</h2>
+      <p>Welcome, <strong>{{ username }}</strong>. Below is an overview of your assigned tasks and their status.</p>
+      
+      <!-- Stats Overview -->
+      <div class="stats-container">
+        <div class="stats-card">
+          <h3>Assigned Tasks</h3>
+          <div class="number">{{ assigned_tasks|default(0) }}</div>
+        </div>
+        <div class="stats-card">
+          <h3>In Progress</h3>
+          <div class="number">{{ in_progress_tasks|default(0) }}</div>
+        </div>
+        <div class="stats-card">
+          <h3>Completed</h3>
+          <div class="number">{{ completed_tasks|default(0) }}</div>
+        </div>
+      </div>
+      
       <!-- Filter Section -->
       <div class="filter-container">
-        <select>
-          <option value="all">All Tasks</option>
-          <option value="active">Active Tasks</option>
-          <option value="completed">Completed Tasks</option>
-        </select>
-        <button>Filter</button>
+        <form action="{{ url_for('contractor_dashboard') }}" method="get">
+          <select name="status_filter" id="statusFilter">
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Tasks</option>
+            <option value="In Progress" {% if status_filter == 'In Progress' %}selected{% endif %}>In Progress</option>
+            <option value="Resolved" {% if status_filter == 'Resolved' %}selected{% endif %}>Completed</option>
+          </select>
+          <button type="submit">Apply Filter</button>
+        </form>
       </div>
 
-      <!-- Active Jobs -->
-      <div id="active-jobs">
-        <div class="task-card active">
-          <div>
-            <span class="status">Active</span>
-            <p class="details">Fix pothole on Main Street. Due by: 5th Feb</p>
+      {% if revision_requests|length > 0 %}
+    <h3 id="revision-tasks" class="mt-4"><i class="bi bi-arrow-repeat"></i> Tasks Requiring Revision</h3>
+    {% for task in revision_requests %}
+      <div class="task-card in-progress">
+        <div class="row">
+          <div class="col-md-8">
+            <h5>{{ task.location }} <span class="badge bg-warning">Revision Requested</span></h5>
+            <p><strong>Description:</strong> {{ task.description }}</p>
+            <p><strong>Reported by:</strong> Citizen #{{ task.user_id }}</p>
+            <p><strong>Contact:</strong> {{ task.phone }}</p>
+            <p><strong>Status:</strong> 
+              <span class="badge bg-warning">
+                Needs Revision
+              </span>
+            </p>
           </div>
-          <button class="btn btn-success btn-sm">Mark as Completed</button>
-        </div>
-        <div class="task-card active">
-          <div>
-            <span class="status">Active</span>
-            <p class="details">Repair broken streetlight on Elm Street. Due by: 10th Feb</p>
+          <div class="col-md-4 text-center">
+            {% if task.photo_path %}
+              <img src="{{ task.photo_path }}" alt="Issue Photo" class="img-fluid mb-2" style="max-height: 150px; border-radius: 5px;">
+              <a href="{{ task.photo_path }}" target="_blank" class="btn btn-sm btn-outline-primary">View Full Image</a>
+            {% else %}
+              <div class="p-4 bg-light rounded mb-2 text-muted">
+                <i class="bi bi-image" style="font-size: 2rem;"></i>
+                <p>No image available</p>
+              </div>
+            {% endif %}
+            
+            <form action="{{ url_for('update_task_status') }}" method="post" class="mt-2">
+              <input type="hidden" name="task_id" value="{{ task.id }}">
+              <button type="submit" name="status" value="Resolved" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Mark as Resolved Again
+              </button>
+            </form>
           </div>
-          <button class="btn btn-success btn-sm">Mark as Completed</button>
         </div>
       </div>
+    {% endfor %}
+    {% endif %}
 
-      <!-- Completed Jobs -->
-      <div id="completed-jobs">
-        <div class="task-card completed">
-          <div>
-            <span class="status">Completed</span>
-            <p class="details">Repaired water leakage on 5th Avenue. Completed by: XYZ Contractor</p>
+      <!-- Assigned Tasks Section -->
+      <h3 id="assigned" class="mt-4"><i class="bi bi-list-task"></i> Your Tasks</h3>
+      
+      {% if tasks %}
+        {% for task in tasks %}
+          <div class="task-card {% if task.status == 'In Progress' %}in-progress{% elif task.status == 'Resolved' %}completed{% else %}pending{% endif %}">
+            <div class="row">
+              <div class="col-md-8">
+                <h5>{{ task.location }}</h5>
+                <p><strong>Description:</strong> {{ task.description }}</p>
+                <p><strong>Reported by:</strong> Citizen #{{ task.user_id }}</p>
+                <p><strong>Contact:</strong> {{ task.phone }}</p>
+                <p><strong>Assigned on:</strong> {{ task.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                <p><strong>Status:</strong> 
+                  <span class="badge {% if task.status == 'In Progress' %}bg-warning
+                                  {% elif task.status == 'Resolved' %}bg-info
+                                  {% elif task.status == 'completed' %}bg-success
+                                  {% else %}bg-secondary{% endif %}">
+                      {% if task.status == 'Resolved' %}Pending Verification
+                      {% elif task.status == 'completed' %}Verified & Completed
+                      {% else %}{{ task.status }}{% endif %}
+                  </span>
+                </p>
+              </div>
+              <div class="col-md-4 text-center">
+                {% if task.photo_path %}
+                  <img src="{{ task.photo_path }}" alt="Issue Photo" class="img-fluid mb-2" style="max-height: 150px; border-radius: 5px;">
+                  <a href="{{ task.photo_path }}" target="_blank" class="btn btn-sm btn-outline-primary">View Full Image</a>
+                {% else %}
+                  <div class="p-4 bg-light rounded mb-2 text-muted">
+                    <i class="bi bi-image" style="font-size: 2rem;"></i>
+                    <p>No image available</p>
+                  </div>
+                {% endif %}
+                
+                {% if task.status == 'In Progress' %}
+                <form action="{{ url_for('update_task_status') }}" method="post" class="mt-2">
+                  <input type="hidden" name="task_id" value="{{ task.id }}">
+                  <button type="submit" name="status" value="Resolved" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Mark as Resolved
+                  </button>
+                </form>
+              {% elif task.status == 'Resolved' %}
+                <div class="alert alert-info mt-2">
+                  <i class="bi bi-info-circle"></i> Awaiting verification from government official
+                </div>
+              {% endif %}
+            </div>
           </div>
         </div>
-        <div class="task-card completed">
-          <div>
-            <span class="status">Completed</span>
-            <p class="details">Fixed streetlight on Pine Avenue. Completed by: ABC Contractor</p>
-          </div>
-        </div>
+      {% endfor %}
+    {% else %}
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> You don't have any assigned tasks at the moment.
       </div>
-
-      <!-- Assigned Tasks -->
-      <div id="assigned-tasks">
-        <div class="task-card active">
-          <div>
-            <span class="status">Assigned</span>
-            <p class="details">Fix pothole on Oak Road. Assigned by: Government Official</p>
+    {% endif %}
+      <!-- Completed Tasks Section -->
+      <h3 id="completed" class="mt-4"><i class="bi bi-check-circle"></i> Completed Tasks</h3>
+      
+      {% if completed_tasks_list %}
+        {% for task in completed_tasks_list %}
+          <div class="task-card completed">
+            <div class="row">
+              <div class="col-md-8">
+                <h5>{{ task.location }}</h5>
+                <p><strong>Description:</strong> {{ task.description }}</p>
+                <p><strong>Completed on:</strong> {{ task.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+              </div>
+              <div class="col-md-4 text-center">
+                {% if task.photo_path %}
+                  <img src="{{ task.photo_path }}" alt="Issue Photo" class="img-fluid mb-2" style="max-height: 150px; border-radius: 5px;">
+                {% else %}
+                  <div class="p-4 bg-light rounded mb-2 text-muted">
+                    <i class="bi bi-image" style="font-size: 2rem;"></i>
+                    <p>No image available</p>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
           </div>
-          <button class="btn btn-warning btn-sm">Start Task</button>
+        {% endfor %}
+      {% else %}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> You haven't completed any tasks yet.
         </div>
-        <div class="task-card active">
-          <div>
-            <span class="status">Assigned</span>
-            <p class="details">Repair broken sidewalk at City Park. Assigned by: Government Official</p>
-          </div>
-          <button class="btn btn-warning btn-sm">Start Task</button>
-        </div>
-      </div>
+      {% endif %}
     </div>
   </div>
 

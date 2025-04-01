@@ -6,6 +6,7 @@
   <title>Manage Issues - Urban Unity</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -21,6 +22,7 @@
       top: 0;
       width: 100%;
       z-index: 1050;
+      border-bottom: 1px solid #ccc;
     }
 
     .vertical-nav {
@@ -33,6 +35,7 @@
       box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
       padding-top: 10px;
       overflow-y: auto;
+      border-right: 1px solid #ccc;
     }
 
     .vertical-nav ul {
@@ -50,14 +53,17 @@
     }
 
     .vertical-nav ul li a {
-      text-decoration: none;
-      font-size: 16px;
       display: block;
-      font-weight: bold;
+      background-color: #007bff; /* Blue background */
+      color: #ffffff; /* White text */
+      padding: 10px 15px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-bottom: 5px; /* Space between items */
     }
 
-    .vertical-nav ul li:hover {
-      background-color: #f8f9fa;
+    .vertical-nav ul li a:hover {
+      background-color: #0056b3; /* Darker blue on hover */
     }
 
     .content {
@@ -88,9 +94,14 @@
       border-left: 5px solid orange;
     }
 
-    .issue-card.resolved {
+    .issue-card.Resolved {
       background-color: #d4edda;
       border-left: 5px solid green;
+    }
+    
+    .issue-card.emergency {
+      background-color: #f8d7da;
+      border-left: 5px solid red;
     }
 
     .issue-card .status {
@@ -142,7 +153,64 @@
       border: 1px solid #ddd;
       margin-right: 10px;
     }
-
+    
+    .stats-container {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    .stats-card {
+      flex: 1;
+      min-width: 200px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    .stats-card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .stats-card .number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #007bff;
+    }
+    
+    .chart-container {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    .chart-card {
+      flex: 1;
+      min-width: 300px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .issue-image {
+      width: 80px;
+      height: 80px;
+      border-radius: 5px;
+      object-fit: cover;
+      margin-right: 10px;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+ 
     @media (max-width: 768px) {
       .vertical-nav {
         width: 100%;
@@ -158,97 +226,334 @@
 </head>
 <body>
   <nav class="navbar navbar-expand-lg">
-    <div class="container">
+    <div class="container-fluid">
       <a class="navbar-brand" href="#">
-        <img src="logos.png" alt="UrbanUnity Logo" height="45">
+        <img src="{{ url_for('static', filename='images/logos.png') }}" alt="UrbanUnity Logo" height="45">
       </a>
+      <div class="ml-auto">
+        <span class="navbar-text">
+          <i class="bi bi-person-circle"></i> Government Official
+        </span>
+      </div>
     </div>
   </nav>
+  
 
   <div class="vertical-nav">
     <ul>
-      <li><a href="#">Dashboard</a></li>
-      <li><a href="#">Manage Issues</a></li>
-      <li><a href="#">Contractor Assignments</a></li>
-      <li><a href="#">Reports & Analytics</a></li>
-      <li><a href="#">Settings</a></li>
+      <li><a href="#"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+      <li><a href="#ri"><i class="bi bi-person-badge"></i> Contractor Assignments</a></li>
+      <li><a href="#"><i class="bi bi-gear"></i> Settings</a></li>
+      <li><a href="#"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
     </ul>
   </div>
 
   <div class="content">
     <div class="dashboard-container">
-      <h2>Manage Reported Issues</h2>
-      <p>Below are the reported issues. You can filter, assign, and resolve them as needed.</p>
 
-      <!-- Filter Section -->
-      <div class="filter-container">
-        <select>
-          <option value="all">All Issues</option>
-          <option value="reported">Reported Issues</option>
-          <option value="resolved">Resolved Issues</option>
-          <option value="emergency">Emergency Issues</option>
-        </select>
-        <button>Filter</button>
+      {% if Resolved_tasks|length > 0 %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+      <i class="bi bi-info-circle"></i> 
+      <strong>{{ Resolved_tasks|length }} task(s)</strong> marked as Resolved by contractors and awaiting your verification.
+      <a href="#pending-verification" class="btn btn-sm btn-primary ms-3">Review Now</a>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+      <h2><i class="bi bi-exclamation-triangle"></i> Manage Reported Issues</h2>
+      <p>Below are the reported issues from citizens. You can filter, assign to contractors, and track resolutions.</p>
+      
+      <!-- Stats Overview -->
+      <div class="stats-container">
+       <div class="stats-card">
+        <h3>Total Issues</h3>
+        <div class="number">{{ grievances|length }}</div>
+       </div>
+     <div class="stats-card">
+       <h3>Pending</h3>
+       <div class="number">{{ grievances|selectattr('status', 'equalto', 'Pending')|list|length }}</div>
+      </div>
+     <div class="stats-card">
+      <h3>In Progress</h3>
+      <div class="number">{{ grievances|selectattr('status', 'equalto', 'In Progress')|list|length }}</div>
+     </div>
+    <div class="stats-card">
+      <h3>Resolved</h3>
+      <div class="number">{{ grievances|selectattr('status', 'equalto', 'Resolved')|list|length }}</div>
+    </div>
+    <div class="stats-card">
+      <h3>Completed</h3>
+      <div class="number">{{ grievances|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+    </div>
+</div>
+
+      
+      
+      <!-- Charts -->
+      <div class="chart-container">
+        <div class="chart-card">
+          <h3>Issues Overview</h3>
+          <canvas id="issuesChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Resolution Time (Avg. Days)</h3>
+          <canvas id="timelineChart"></canvas>
+        </div>
       </div>
 
-      <!-- Issues List -->
-      <div id="reported-issues">
-        <div class="issue-card reported">
-          <div>
-            <span class="status">Reported</span>
-            <p class="details">Broken streetlight on Elm Street. Reported by: John Doe</p>
+      <!-- Filter Section -->
+      <div class="filter-container" id="ri">
+        <select id="statusFilter">
+          <option value="all">All Issues</option>
+          <option value="reported">Pending Issues</option>
+          <option value="Resolved">Resolved Issues</option>
+          <option value="emergency">Emergency Issues</option>
+        </select>
+        <select id="locationFilter">
+          <option value="all">All Locations</option>
+          <option value="north">North District</option>
+          <option value="south">South District</option>
+          <option value="east">East District</option>
+          <option value="west">West District</option>
+        </select>
+        <button>Apply Filters</button>
+      </div>
+
+      <div class="container mt-4">
+        <h2 class="mb-4">Manage Issues</h2>
+        {% if grievances %}
+          <table class="table table-bordered table-hover">
+            <thead class="thead-light">
+              <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Location</th>
+                <th>Description</th>
+                <th>Phone</th>
+                <th>Submitted At</th>
+                <th>Photo</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for grievance in grievances %}
+              <tr class="{% if grievance.status == 'Pending' %}table-warning
+                         {% elif grievance.status == 'Resolved' %}table-warning
+                         {% elif grievance.status == 'In Progress' %}table-info
+                         {% elif grievance.status == 'completed' %}table-success{% endif %}">
+                <td>{{ grievance.id }}</td>
+                <td>{{ grievance.user_id }}</td>
+                <td>{{ grievance.location }}</td>
+                <td>{{ grievance.description }}</td>
+                <td>{{ grievance.phone }}</td>
+                <td>{{ grievance.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                  {% if grievance.photo_path %}
+                    <a href="{{ grievance.photo_path }}" target="_blank" class="btn btn-sm btn-outline-primary">View Photo</a>
+                  {% else %}
+                    No Photo
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if grievance.status == 'pending' %}bg-warning
+                                    {% elif grievance.status == 'Resolved' %}bg-warning
+                                    {% elif grievance.status == 'emergency' %}bg-danger
+                                    {% elif grievance.status == 'In Progress' %}bg-info
+                                    {% elif grievance.status == 'completed' %}bg-success
+                                    {% else %}bg-secondary{% endif %}">
+                    {% if grievance.status == 'Resolved' %}Resolved (Pending Verification){% else %}{{ grievance.status }}{% endif %}
+                  </span>
+                </td>
+                <td>
+                  {% if grievance.status == 'completed' %}
+                    <div class="d-flex align-items-center">
+                      <span class="badge bg-secondary me-2">Completed</span>
+                      {% for contractor in contractors %}
+                        {% if contractor.id == grievance.contractor_id %}
+                          <small>By: {{ contractor.services_provided }}</small>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% elif grievance.status == 'Resolved' %}
+                    <div class="d-flex align-items-center">
+                      <span class="badge bg-success me-2">Pending Verification</span>
+                      {% for contractor in contractors %}
+                        {% if contractor.id == grievance.contractor_id %}
+                          <small>By: {{ contractor.services_provided }}</small>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% elif grievance.status == 'In Progress' %}
+                    <div class="d-flex align-items-center">
+                      <span class="badge bg-info me-2">In Progress</span>
+                      {% for contractor in contractors %}
+                        {% if contractor.id == grievance.contractor_id %}
+                          <small>Assigned to: {{ contractor.services_provided }}</small>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <form action="/assign_contractor" method="post">
+                      <input type="hidden" name="grievance_id" value="{{ grievance.id }}">
+                      <div class="input-group">
+                        <select name="contractor_id" class="form-select form-select-sm" required>
+                          <option value="">Select Contractor</option>
+                          {% for contractor in contractors %}
+                            <option value="{{ contractor.id }}">
+                              {{ contractor.services_provided }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                      </div>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info">No grievances found.</div>
+        {% endif %}
+      </div>
+      
+      <div class="container mt-4">
+        <h3 id="pending-verification"><i class="bi bi-check2-circle"></i> Tasks Awaiting Verification</h3>
+        {% if Resolved_tasks|length > 0 %}
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead class="thead-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Location</th>
+                  <th>Description</th>
+                  <th>Submitted At</th>
+                  <th>Contractor</th>
+                  <th>Photo</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for task in Resolved_tasks %}
+                <tr class="table-info">
+                  <td>{{ task.id }}</td>
+                  <td>{{ task.location }}</td>
+                  <td>{{ task.description }}</td>
+                  <td>{{ task.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                  <td>
+                    {% for contractor in contractors %}
+                      {% if contractor.id == task.contractor_id %}
+                        {{ contractor.services_provided }}
+                      {% endif %}
+                    {% endfor %}
+                  </td>
+                  <td>
+                    {% if task.photo_path %}
+                      <a href="{{ task.photo_path }}" target="_blank" class="btn btn-sm btn-outline-primary">View Photo</a>
+                    {% else %}
+                      No Photo
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex">
+                      <form action="/verify_task" method="post" class="me-2">
+                        <input type="hidden" name="task_id" value="{{ task.id }}">
+                        <button type="submit" class="btn btn-success btn-sm">
+                          <i class="bi bi-check-circle"></i> Verify
+                        </button>
+                      </form>
+                      <form action="/request_revision" method="post">
+                        <input type="hidden" name="task_id" value="{{ task.id }}">
+                        <button type="submit" class="btn btn-warning btn-sm">
+                          <i class="bi bi-arrow-counterclockwise"></i> Request Revision
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
-          <div class="actions">
-            <select class="assign-dropdown">
-              <option value="contractor1">Contractor 1</option>
-              <option value="contractor2">Contractor 2</option>
-              <option value="contractor3">Contractor 3</option>
-            </select>
-            <button class="assign-button">Assign</button>
-            <button class="btn btn-success btn-sm">Mark as Resolved</button>
-          </div>
-        </div>
-        <div class="issue-card reported">
-          <div>
-            <span class="status">Reported</span>
-            <p class="details">Pothole on Maple Avenue causing traffic issues. Reported by: Jane Smith</p>
-          </div>
-          <div class="actions">
-            <select class="assign-dropdown">
-              <option value="contractor1">Contractor 1</option>
-              <option value="contractor2">Contractor 2</option>
-              <option value="contractor3">Contractor 3</option>
-            </select>
-            <button class="assign-button">Assign</button>
-            <button class="btn btn-success btn-sm">Mark as Resolved</button>
-          </div>
-        </div>
-        <div class="issue-card resolved">
-          <div>
-            <span class="status">Resolved</span>
-            <p class="details">Water leakage near City Park. Resolved by: XYZ Construction</p>
-          </div>
-          <button class="btn btn-secondary btn-sm" disabled>Completed</button>
-        </div>
-        <div class="issue-card reported">
-          <div>
-            <span class="status">Reported</span>
-            <p class="details">Garbage overflow near Market Square. Reported by: Mark Lee</p>
-          </div>
-          <div class="actions">
-            <select class="assign-dropdown">
-              <option value="contractor1">Contractor 1</option>
-              <option value="contractor2">Contractor 2</option>
-              <option value="contractor3">Contractor 3</option>
-            </select>
-            <button class="assign-button">Assign</button>
-            <button class="btn btn-success btn-sm">Mark as Resolved</button>
-          </div>
-        </div>
+        {% else %}
+          <div class="alert alert-info">No tasks awaiting verification.</div>
+        {% endif %}
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Get dynamic status counts from Flask
+    const statusCounts = {{ status_counts | tojson }};
+    
+    // Extract status names and counts
+    const labels = Object.keys(statusCounts);
+    const data = Object.values(statusCounts);
+    
+    // Define colors for different statuses
+    const getStatusColor = (status) => {
+  const statusColors = {
+    'Pending': '#ffc107',    // yellow
+    'In Progress': '#17a2b8', // blue
+    'Resolved': '#ffc107',   // yellow (same as pending)
+    'completed': '#28a745'   // green
+  };
+  return statusColors[status] || '#6c757d'; // default to gray
+};
+    
+    const backgroundColors = labels.map(status => getStatusColor(status));
+  
+    // Pie Chart for Issues
+    const issuesCtx = document.getElementById('issuesChart').getContext('2d');
+    const issuesChart = new Chart(issuesCtx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: backgroundColors,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+    
+    // For the timeline chart, we'd need additional data from the backend
+    // This is a placeholder that you can replace with real data
+    const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+    const timelineChart = new Chart(timelineCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Streetlights', 'Potholes', 'Water Issues', 'Garbage', 'Others'],
+        datasets: [{
+          label: 'Average Days to Resolve',
+          data: [2.3, 3.5, 1.8, 1.2, 2.7],
+          backgroundColor: '#007bff'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Days'
+            }
+          }
+        }
+      }
+    });
+  </script>
 </body>
 </html>

@@ -66,6 +66,12 @@
       border-radius: 10px;
     }
 
+    .error-message {
+      color: red;
+      font-size: 14px;
+      display: none;
+    } 
+
     button {
       width: 100%;
       padding: 12px;
@@ -153,33 +159,45 @@
   <div class="content">
     <div class="form-container">
       <form id="citizenSignupForm" action="{{ url_for('signup') }}" method="POST" onsubmit="return validateForm()">
+        {% if error %}
+        <p style="color: red; text-align: center;">{{ error }}</p>
+        {% endif %}
         <h1 class="form-title">Citizen Signup</h1>
         <p class="form-subtitle">Please enter your details to continue</p>
 
         <label for="first-name">First Name</label>
-        <input type="text" id="first-name" placeholder="First Name" required>
+    <input type="text" id="first-name" name="first-name" required>
+    <span id="error-first-name" class="error-message">Only letters are allowed</span>
 
-        <label for="last-name">Last Name</label>
-        <input type="text" id="last-name" placeholder="Last Name" required>
+    <label for="last-name">Last Name</label>
+    <input type="text" id="last-name" name="last-name" required>
+    <span id="error-last-name" class="error-message">Only letters are allowed</span>
 
-        <label for="phone">Phone Number</label>
-        <input type="text" id="phone" placeholder="Phone Number" required>
+    <label for="phone">Phone Number</label>
+    <input type="text" id="phone" name="phone" required>
+    <span id="error-phone" class="error-message">Enter a valid 10-digit phone number</span>
 
-        <label for="city">City</label>
-        <select id="city" required>
-          <option value="" disabled selected>Select a city</option>
-          <option value="Kochi">Kochi</option>
-          <option value="Eranakulam">Eranakulam</option>
-        </select>
+    <label for="city">City</label>
+    <select id="city" name="city" required>
+        <option value="" disabled selected>Select a city</option>
+        <option value="Kochi">Kochi</option>
+        <option value="Eranakulam">Eranakulam</option>
+    </select>
+    <span id="error-city" class="error-message">Please select a city</span>
 
-        <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Username" required>
 
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Password" required>
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" required>
+    <span id="error-username" class="error-message">Username must be at least 6 characters</span>
 
-        <label for="retype-password">Retype Password</label>
-        <input type="password" id="retype-password" placeholder="Retype Password" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+    <span id="error-password" class="error-message">Password must be at least 6 characters</span>
+
+    <label for="retype-password">Retype Password</label>
+    <input type="password" id="retype-password" required>
+    <span id="error-retype-password" class="error-message">Passwords do not match</span>
 
         <button type="submit">Sign Up</button>
       </form>
@@ -190,18 +208,118 @@
   </div>
 
   <script>
-    function validateForm() {
-      let password = document.getElementById('password').value;
-      let retypePassword = document.getElementById('retype-password').value;
-      if (password !== retypePassword) {
-        alert("Passwords do not match!");
-        return false;
-      }
-      return true;
+    document.addEventListener('DOMContentLoaded', function () {
+  // Validation functions
+  function toggleError(input, isValid, errorId, message) {
+    const errorElement = document.getElementById(errorId);
+    if (!isValid) {
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    } else {
+      errorElement.style.display = 'none';
     }
-  </script>
+  }
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  // First Name Validation
+  document.getElementById('first-name').addEventListener('input', function () {
+    const pattern = /^[A-Za-z]+$/;
+    toggleError(this, pattern.test(this.value), 'error-first-name', 'Only letters are allowed');
+  });
+
+  // Last Name Validation
+  document.getElementById('last-name').addEventListener('input', function () {
+    const pattern = /^[A-Za-z]+$/;
+    toggleError(this, pattern.test(this.value), 'error-last-name', 'Only letters are allowed');
+  });
+
+  // Phone Number Validation (must be exactly 10 digits)
+  document.getElementById('phone').addEventListener('input', function () {
+    const pattern = /^[0-9]{10}$/;
+    toggleError(this, pattern.test(this.value), 'error-phone', 'Enter a valid 10-digit phone number');
+  });
+
+  // Username Validation (at least 6 characters)
+  document.getElementById('username').addEventListener('input', function () {
+    const pattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    toggleError(this, pattern.test(this.value), 'error-username', 'Username must be at least 6 characters and contain both letters and numbers');
+  });
+
+  // Password Validation (at least 6 characters)
+  document.getElementById('password').addEventListener('input', function () {
+    toggleError(this, this.value.length >= 6, 'error-password', 'Password must be at least 6 characters');
+  });
+
+  // Retype Password Validation (must match password)
+  document.getElementById('retype-password').addEventListener('input', function () {
+    const password = document.getElementById('password').value;
+    toggleError(this, this.value === password, 'error-retype-password', 'Passwords do not match');
+  });
+
+  // City Selection Validation
+  document.getElementById('city').addEventListener('change', function () {
+    toggleError(this, this.value !== '', 'error-city', 'Please select a city');
+  });
+
+  // Final Form Validation on Submit
+  document.getElementById('citizenSignupForm').addEventListener('submit', function (event) {
+    let valid = true;
+
+    // Validate First Name
+    const firstName = document.getElementById('first-name').value;
+    if (!/^[A-Za-z]+$/.test(firstName)) {
+      toggleError(document.getElementById('first-name'), false, 'error-first-name', 'Only letters are allowed');
+      valid = false;
+    }
+
+    // Validate Last Name
+    const lastName = document.getElementById('last-name').value;
+    if (!/^[A-Za-z]+$/.test(lastName)) {
+      toggleError(document.getElementById('last-name'), false, 'error-last-name', 'Only letters are allowed');
+      valid = false;
+    }
+
+    // Validate Phone Number
+    const phone = document.getElementById('phone').value;
+    if (!/^[0-9]{10}$/.test(phone)) {
+      toggleError(document.getElementById('phone'), false, 'error-phone', 'Enter a valid 10-digit phone number');
+      valid = false;
+    }
+
+    // Validate Username
+    const username = document.getElementById('username').value;
+    if (username.length < 6) {
+      toggleError(document.getElementById('username'), false, 'error-username', 'Username must be at least 6 characters');
+      valid = false;
+    }
+
+    // Validate Password
+    const password = document.getElementById('password').value;
+    if (password.length < 6) {
+      toggleError(document.getElementById('password'), false, 'error-password', 'Password must be at least 6 characters');
+      valid = false;
+    }
+
+    // Validate Retyped Password
+    const retypePassword = document.getElementById('retype-password').value;
+    if (password !== retypePassword) {
+      toggleError(document.getElementById('retype-password'), false, 'error-retype-password', 'Passwords do not match');
+      valid = false;
+    }
+
+    // Validate City
+    const city = document.getElementById('city').value;
+    if (!city) {
+      toggleError(document.getElementById('city'), false, 'error-city', 'Please select a city');
+      valid = false;
+    }
+
+    if (!valid) {
+      event.preventDefault(); // Prevent form submission if there are errors
+    }
+  });
+});
+
+  </script>
 
 </body>
 </html>

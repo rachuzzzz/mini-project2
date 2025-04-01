@@ -9,7 +9,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: url('cbanner.jpg') no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='images/cbanner.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       margin: 0;
       height: 100vh;
@@ -118,16 +118,16 @@
 
   <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
-      <a class="navbar-brand" href="index.html">
-        <img src="logos.png" alt="UrbanUnity Logo">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <img src="{{ url_for('static', filename='images/logos.png') }}" alt="UrbanUnity Logo">
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <div class="ms-auto d-flex gap-2">
-          <a href="blogin.html" class="btn btn-link">Contractor Login</a>
-          <a href="alogin.html" class="btn btn-primary">Admin Login</a>
+          <a href="{{ url_for('contractor_login') }}" class="btn btn-link">Contractor Login</a>
+          <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Admin Login</a>
         </div>
       </div>
     </div>
@@ -138,33 +138,34 @@
       <h1 class="form-title">Submit Grievance</h1>
       <p class="form-subtitle">Please provide the necessary details</p>
 
-      <form id="grievanceForm" onsubmit="return validateForm()">
+      <form id="grievanceForm" action="{{ url_for('submit_grievance') }}" method="POST" enctype="multipart/form-data">
         <!-- Location Input -->
         <label for="location">Location</label>
-        <input type="text" id="location" placeholder="Enter a location" required>
-
+        <input type="text" id="location" name="location" placeholder="Enter a location" required>
+    
         <!-- Map -->
         <label for="map">Select Location on Map</label>
         <div id="map"></div>
-
+    
         <!-- Hidden input for latitude and longitude -->
         <input type="hidden" id="latitude" name="latitude" />
         <input type="hidden" id="longitude" name="longitude" />
-
+    
         <!-- Grievance Description -->
         <label for="description">Grievance Description</label>
-        <textarea id="description" rows="4" placeholder="Describe your grievance here" required></textarea>
-
+        <textarea id="description" name="description" rows="4" placeholder="Describe your grievance here" required></textarea>
+    
         <!-- Phone Number -->
         <label for="phone">Phone Number</label>
-        <input type="text" id="phone" placeholder="Enter phone number" required>
-
+        <input type="text" id="phone" name="phone" placeholder="Enter phone number" required>
+    
         <!-- Upload Photo -->
         <label for="photo">Upload Photo</label>
-        <input type="file" id="photo" accept="image/*" required>
-
+        <input type="file" id="photo" name="photo" accept="image/*" required>
+    
         <button type="submit">Submit Grievance</button>
-      </form>
+    </form>
+    
     </div>
   </div>
 
