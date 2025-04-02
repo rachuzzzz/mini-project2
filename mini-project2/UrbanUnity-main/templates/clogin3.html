@@ -70,6 +70,10 @@
       font-size: 14px;
     }
 
+    .input-error {
+      border: 1px solid #dc3545;
+    }
+
     button {
       width: 100%;
       padding: 12px;
@@ -88,6 +92,34 @@
     .help-text {
       margin-top: 15px;
       font-size: 13px;
+    }
+
+    .error-message {
+      color: #dc3545;
+      font-size: 14px;
+      margin-top: -10px;
+      margin-bottom: 15px;
+      text-align: left;
+      display: none;
+    }
+    
+    .alert-danger {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    .session-info {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      z-index: 1001;
+      padding: 10px;
     }
 
     @keyframes fadeIn {
@@ -118,46 +150,141 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <div class="ms-auto d-flex gap-2">
-          <a href="{{ url_for('contractor_login') }}" class="btn btn-link">Contractor Login</a>
-          <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Admin Login</a>
+          {% if session.get('user_id') %}
+            <span class="navbar-text">Logged in as: {{ session.get('username') }}</span>
+            <a href="{{ url_for('cdashboard') }}" class="btn btn-primary">Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+          {% elif session.get('admin_id') %}
+            <span class="navbar-text">Logged in as Admin: {{ session.get('government_id') }}</span>
+            <a href="{{ url_for('manage_issues') }}" class="btn btn-primary">Admin Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+          {% elif session.get('contractor_id') %}
+            <span class="navbar-text">Logged in as Contractor: {{ session.get('contractor_username') }}</span>
+            <a href="{{ url_for('contractor_dashboard') }}" class="btn btn-primary">Contractor Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+          {% else %}
+            <a href="{{ url_for('contractor_login') }}" class="btn btn-link">Contractor Login</a>
+            <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Admin Login</a>
+          {% endif %}
         </div>
       </div>
     </div>
   </nav>
 
+  {% if session.get('admin_id') or session.get('contractor_id') or session.get('user_id') %}
+    <div class="session-info alert alert-warning">
+      <strong>Notice:</strong> 
+      {% if session.get('admin_id') %}
+        You are currently logged in as Admin. Please <a href="{{ url_for('logout') }}">logout</a> first if you want to access the citizen portal.
+      {% elif session.get('contractor_id') %}
+        You are currently logged in as Contractor. Please <a href="{{ url_for('logout') }}">logout</a> first if you want to access the citizen portal.
+      {% elif session.get('user_id') %}
+        You are already logged in as a citizen. <a href="{{ url_for('cdashboard') }}">Go to dashboard</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
   <div class="content">
     <div class="form-container">
       <img src="{{ url_for('static', filename='images/cit.png') }}" alt="Citizen Logo">
       <h1>Citizen Login</h1>
-      <form id="citizenLoginForm" action="{{ url_for('citizen_login') }}" method="POST">
-        <input type="text" id="username" name="username" placeholder="Username" required>
-        <input type="password" id="password" name="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-    </form>    
-      <div class="help-text">
-        <p>New user? <a href="{{ url_for('signup') }}">Sign up</a></p>
-      </div>
+      
+      <!-- Error message for incorrect credentials -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-3">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      <!-- Only show the form if user is not logged in -->
+      {% if not session.get('admin_id') and not session.get('contractor_id') and not session.get('user_id') %}
+        <form id="citizenLoginForm" action="{{ url_for('citizen_login') }}" method="POST" novalidate>
+          <div class="form-group mb-3">
+            <input type="text" id="username" name="username" placeholder="Username" 
+                   class="{% if errors and errors.username %}input-error{% endif %}" 
+                   value="{{ username|default('') }}" required>
+            <span id="error-username" class="error-message">{{ errors.username if errors and errors.username }}</span>
+          </div>
+          
+          <div class="form-group mb-3">
+            <input type="password" id="password" name="password" placeholder="Password" 
+                   class="{% if errors and errors.password %}input-error{% endif %}" required>
+            <span id="error-password" class="error-message">{{ errors.password if errors and errors.password }}</span>
+          </div>
+          
+          <button type="submit">Login</button>
+        </form>
+        
+        <div class="help-text">
+          <p>New user? <a href="{{ url_for('signup') }}">Sign up</a></p>
+        </div>
+      {% endif %}
     </div>
   </div>
 
   <script>
-    function validateForm() {
-      let username = document.getElementById("username").value;
-      let password = document.getElementById("password").value;
+    document.addEventListener('DOMContentLoaded', function() {
+      // Form validation
+      const form = document.getElementById('citizenLoginForm');
+      if (!form) return; // Exit if form doesn't exist (user is already logged in)
       
-      if (username.trim() === "") {
-        alert("Username is required");
-        return false;
+      const username = document.getElementById('username');
+      const password = document.getElementById('password');
+      const errorUsername = document.getElementById('error-username');
+      const errorPassword = document.getElementById('error-password');
+
+      function validateField(input, errorElement, message) {
+        if (input.value.trim() === '') {
+          errorElement.textContent = message;
+          errorElement.style.display = 'block';
+          input.classList.add('input-error');
+          return false;
+        } else {
+          errorElement.style.display = 'none';
+          input.classList.remove('input-error');
+          return true;
+        }
       }
-      if (password.trim() === "") {
-        alert("Password is required");
-        return false;
+
+      // Show validation errors immediately if they exist
+      if (errorUsername && errorUsername.textContent) {
+        errorUsername.style.display = 'block';
       }
-      return true;
-    }
+      
+      if (errorPassword && errorPassword.textContent) {
+        errorPassword.style.display = 'block';
+      }
+
+      // Live validation as user types
+      username.addEventListener('input', function() {
+        validateField(username, errorUsername, 'Username is required');
+      });
+
+      password.addEventListener('input', function() {
+        validateField(password, errorPassword, 'Password is required');
+      });
+
+      // Final validation on form submission
+      form.addEventListener('submit', function(event) {
+        let isValid = true;
+        
+        if (!validateField(username, errorUsername, 'Username is required')) {
+          isValid = false;
+        }
+        
+        if (!validateField(password, errorPassword, 'Password is required')) {
+          isValid = false;
+        }
+        
+        if (!isValid) {
+          event.preventDefault();
+        }
+      });
+    });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>

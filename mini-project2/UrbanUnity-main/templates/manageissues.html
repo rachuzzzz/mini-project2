@@ -227,7 +227,7 @@
 <body>
   <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
         <img src="{{ url_for('static', filename='images/logos.png') }}" alt="UrbanUnity Logo" height="45">
       </a>
       <div class="ml-auto">
@@ -243,8 +243,8 @@
     <ul>
       <li><a href="#"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
       <li><a href="#ri"><i class="bi bi-person-badge"></i> Contractor Assignments</a></li>
-      <li><a href="#"><i class="bi bi-gear"></i> Settings</a></li>
-      <li><a href="#"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+      <li><a href="/admin-feedback"><i class="bi bi-chat-left-text"></i> Feedback</a></li>
+      <li><a href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
     </ul>
   </div>
 
@@ -290,33 +290,26 @@
       
       
       <!-- Charts -->
-      <div class="chart-container">
-        <div class="chart-card">
+      <div class="chart-container" style="justify-content: center;">
+        <div class="chart-card" style="max-width: 500px; margin: 0 auto;">
           <h3>Issues Overview</h3>
           <canvas id="issuesChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Resolution Time (Avg. Days)</h3>
-          <canvas id="timelineChart"></canvas>
         </div>
       </div>
 
       <!-- Filter Section -->
+      <!-- Status Filter Section -->
       <div class="filter-container" id="ri">
-        <select id="statusFilter">
-          <option value="all">All Issues</option>
-          <option value="reported">Pending Issues</option>
-          <option value="Resolved">Resolved Issues</option>
-          <option value="emergency">Emergency Issues</option>
-        </select>
-        <select id="locationFilter">
-          <option value="all">All Locations</option>
-          <option value="north">North District</option>
-          <option value="south">South District</option>
-          <option value="east">East District</option>
-          <option value="west">West District</option>
-        </select>
-        <button>Apply Filters</button>
+        <form action="{{ url_for('manage_issues') }}" method="get">
+         <select name="status_filter" class="form-select">
+          <option value="all" {% if status_filter=='all' %}selected{% endif %}>All Statuses</option>
+          <option value="Pending" {% if status_filter=='Pending' %}selected{% endif %}>Pending</option>
+          <option value="In Progress" {% if status_filter=='In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Resolved" {% if status_filter=='Resolved' %}selected{% endif %}>Resolved (Pending Verification)</option>
+          <option value="completed" {% if status_filter=='completed' %}selected{% endif %}>Completed</option>
+         </select>
+         <button type="submit" class="btn btn-primary">Filter</button>
+       </form>
       </div>
 
       <div class="container mt-4">
@@ -449,6 +442,21 @@
                       {% endif %}
                     {% endfor %}
                   </td>
+                  <!-- Inside manageissues.html, where Resolved_tasks are displayed -->
+                  <td>
+                    <div class="d-flex gap-2">
+                      {% if task.photo_path %}
+                        <a href="{{ task.photo_path }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-image"></i> Original Issue
+                        </a>
+                      {% endif %}
+                      {% if task.completion_proof_url %}
+                        <a href="{{ task.completion_proof_url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                          <i class="bi bi-check-circle"></i> Proof of Fix
+                        </a>
+                      {% endif %}
+                    </div>
+                    </td>
                   <td>
                     {% if task.photo_path %}
                       <a href="{{ task.photo_path }}" target="_blank" class="btn btn-sm btn-outline-primary">View Photo</a>
@@ -495,14 +503,14 @@
     
     // Define colors for different statuses
     const getStatusColor = (status) => {
-  const statusColors = {
-    'Pending': '#ffc107',    // yellow
-    'In Progress': '#17a2b8', // blue
-    'Resolved': '#ffc107',   // yellow (same as pending)
-    'completed': '#28a745'   // green
-  };
-  return statusColors[status] || '#6c757d'; // default to gray
-};
+      const statusColors = {
+        'Pending': '#ffc107',    // yellow
+        'In Progress': '#17a2b8', // blue
+        'Resolved': '#ffc107',   // yellow (same as pending)
+        'completed': '#28a745'   // green
+      };
+      return statusColors[status] || '#6c757d'; // default to gray
+    };
     
     const backgroundColors = labels.map(status => getStatusColor(status));
   
@@ -523,33 +531,6 @@
         plugins: {
           legend: {
             position: 'bottom'
-          }
-        }
-      }
-    });
-    
-    // For the timeline chart, we'd need additional data from the backend
-    // This is a placeholder that you can replace with real data
-    const timelineCtx = document.getElementById('timelineChart').getContext('2d');
-    const timelineChart = new Chart(timelineCtx, {
-      type: 'bar',
-      data: {
-        labels: ['Streetlights', 'Potholes', 'Water Issues', 'Garbage', 'Others'],
-        datasets: [{
-          label: 'Average Days to Resolve',
-          data: [2.3, 3.5, 1.8, 1.2, 2.7],
-          backgroundColor: '#007bff'
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Days'
-            }
           }
         }
       }

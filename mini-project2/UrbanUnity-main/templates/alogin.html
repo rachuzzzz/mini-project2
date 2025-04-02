@@ -75,6 +75,10 @@
       font-size: 14px;
     }
 
+    .input-error {
+      border: 1px solid #dc3545;
+    }
+
     button {
       width: 100%;
       padding: 12px;
@@ -93,6 +97,20 @@
     .help-text {
       margin-top: 15px;
       font-size: 13px;
+    }
+
+    .error-message {
+      color: #dc3545;
+      font-size: 14px;
+      margin-top: -10px;
+      margin-bottom: 15px;
+      text-align: left;
+      display: none;
+    }
+
+    .alert {
+      margin-bottom: 15px;
+      border-radius: 10px;
     }
 
     @keyframes fadeIn {
@@ -134,36 +152,102 @@
 
   <div class="content">
     <div class="form-container">
-        <img src="{{ url_for('static', filename='images/gov.jpg') }}" alt="Admin Logo">
-        <h1>Admin Login</h1>
-        <form id="governmentLoginForm" action="{{ url_for('admin_login') }}" method="POST" onsubmit="return validateForm()">
-            <input type="text" id="adm-id" name="government_id" placeholder="Admin ID" required>
-            <input type="password" id="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <div class="help-text"></div>  <!-- Ensure JS updates this for validation errors -->
+      <img src="{{ url_for('static', filename='images/gov.jpg') }}" alt="Admin Logo">
+      <h1>Admin Login</h1>
+      
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-3">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      <form id="adminLoginForm" action="{{ url_for('admin_login') }}" method="POST" novalidate>
+        <div class="form-group mb-3">
+          <input type="text" id="government_id" name="government_id" placeholder="Admin ID" 
+                 class="{% if errors and errors.government_id %}input-error{% endif %}"
+                 value="{{ government_id|default('') }}" required>
+          <span id="error-government_id" class="error-message">{{ errors.government_id if errors and errors.government_id }}</span>
+        </div>
+        
+        <div class="form-group mb-3">
+          <input type="password" id="password" name="password" placeholder="Password"
+                 class="{% if errors and errors.password %}input-error{% endif %}" required>
+          <span id="error-password" class="error-message">{{ errors.password if errors and errors.password }}</span>
+        </div>
+        
+        <button type="submit" id="loginButton">Login</button>
+      </form>
+      
+      <div class="help-text"></div>
     </div>
-</div>
-
+  </div>
 
   <script>
-    function validateForm() {
-      let govtId = document.getElementById("adm-id").value;
-      let password = document.getElementById("password").value;
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('adminLoginForm');
+      const governmentId = document.getElementById('government_id');
+      const password = document.getElementById('password');
+      const errorGovernmentId = document.getElementById('error-government_id');
+      const errorPassword = document.getElementById('error-password');
+      const loginButton = document.getElementById('loginButton');
+
+      function validateField(input, errorElement, message) {
+        if (input.value.trim() === '') {
+          errorElement.textContent = message;
+          errorElement.style.display = 'block';
+          input.classList.add('input-error');
+          return false;
+        } else {
+          errorElement.style.display = 'none';
+          input.classList.remove('input-error');
+          return true;
+        }
+      }
+
+      // Show validation errors immediately if they exist
+      if (errorGovernmentId && errorGovernmentId.textContent) {
+        errorGovernmentId.style.display = 'block';
+      }
       
-      if (govtId.trim() === "") {
-        alert("Admin ID is required");
-        return false;
+      if (errorPassword && errorPassword.textContent) {
+        errorPassword.style.display = 'block';
       }
-      if (password.trim() === "") {
-        alert("Password is required");
-        return false;
-      }
-      return true;
-    }
+
+      // Live validation as user types
+      governmentId.addEventListener('input', function() {
+        validateField(governmentId, errorGovernmentId, 'Admin ID is required');
+      });
+
+      password.addEventListener('input', function() {
+        validateField(password, errorPassword, 'Password is required');
+      });
+
+      // Form submission validation
+      form.addEventListener('submit', function(event) {
+        let isValid = true;
+        
+        if (!validateField(governmentId, errorGovernmentId, 'Admin ID is required')) {
+          isValid = false;
+        }
+        
+        if (!validateField(password, errorPassword, 'Password is required')) {
+          isValid = false;
+        }
+        
+        if (!isValid) {
+          event.preventDefault();
+        } else {
+          // Disable button to prevent multiple submissions
+          loginButton.disabled = true;
+          loginButton.textContent = "Logging in...";
+        }
+      });
+    });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>

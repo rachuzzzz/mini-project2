@@ -255,10 +255,8 @@
 
   <div class="vertical-nav">
     <ul>
-      <li><a href="{{ url_for('cdashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
       <li><a href="{{ url_for('report_issue') }}"><i class="bi bi-exclamation-circle"></i> Report Issue</a></li>
-      <li><a href="{{ url_for('track_grievance') }}"><i class="bi bi-binoculars"></i> Track Grievances</a></li>
-      <li><a href="#"><i class="bi bi-chat-dots"></i> Feedback</a></li>
+      <li><a href="{{ url_for('view_feedback') }}"><i class="bi bi-chat-dots"></i> Feedback</a></li>
       <li><a href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
     </ul>
   </div>
@@ -269,21 +267,28 @@
       <p>View the current status of all grievances you've reported. We keep you updated at every step.</p>
       
       <!-- Filter Section -->
-      <div class="filter-container">
-        <select id="statusFilter">
-          <option value="all">All Grievances</option>
-          <option value="pending">Pending</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
-        </select>
-        <select id="dateFilter">
-          <option value="all">All Time</option>
-          <option value="week">Last Week</option>
-          <option value="month">Last Month</option>
-          <option value="year">Last Year</option>
-        </select>
-        <button id="applyFilter">Apply Filters</button>
-      </div>
+<div class="filter-container">
+  <form method="GET" action="{{ url_for('track_grievance') }}">
+    <select name="status" id="statusFilter" class="form-select">
+      <option value="all" {% if request.args.get('status', 'all') == 'all' %}selected{% endif %}>All Grievances</option>
+      <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>In Progress</option>
+      <option value="Resolved" {% if request.args.get('status') == 'Resolved' %}selected{% endif %}>Resolved</option>
+    </select>
+    
+    <select name="date" id="dateFilter" class="form-select">
+      <option value="all" {% if request.args.get('date', 'all') == 'all' %}selected{% endif %}>All Time</option>
+      <option value="week" {% if request.args.get('date') == 'week' %}selected{% endif %}>Last Week</option>
+      <option value="month" {% if request.args.get('date') == 'month' %}selected{% endif %}>Last Month</option>
+      <option value="year" {% if request.args.get('date') == 'year' %}selected{% endif %}>Last Year</option>
+    </select>
+    
+    <button type="submit" class="btn btn-primary">Apply Filters</button>
+    {% if request.args.get('status') or request.args.get('date') %}
+      <a href="{{ url_for('track_grievance') }}" class="btn btn-outline-secondary">Clear Filters</a>
+    {% endif %}
+  </form>
+</div>
 
       <div class="grievance-list">
         {% if grievances %}

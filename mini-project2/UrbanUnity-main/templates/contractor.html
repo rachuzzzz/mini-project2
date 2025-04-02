@@ -305,8 +305,15 @@
                 {% endif %}
                 
                 {% if task.status == 'In Progress' %}
-                <form action="{{ url_for('update_task_status') }}" method="post" class="mt-2">
+                <form action="{{ url_for('update_task_status') }}" method="post" enctype="multipart/form-data">
                   <input type="hidden" name="task_id" value="{{ task.id }}">
+
+                  <div class="mb-3">
+                    <label for="completion_proof" class="form-label">Upload Proof of Completion:</label>
+                    <input type="file" class="form-control" name="completion_proof" accept="image/*" required>
+                  </div>
+
+                  
                   <button type="submit" name="status" value="Resolved" class="btn btn-success">
                     <i class="bi bi-check-circle"></i> Mark as Resolved
                   </button>
