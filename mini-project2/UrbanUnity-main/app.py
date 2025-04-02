@@ -5,7 +5,9 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import cloudinary
 import cloudinary.uploader
-import cloudinary.api
+#import cloudinary.api
+#from bot import chatbot_api
+
 
 # Cloudinary configuration
 cloudinary.config( 
@@ -16,6 +18,7 @@ cloudinary.config(
 
 app = Flask(__name__)
 app.secret_key = '123456'  # Secret key for session management
+#app.register_blueprint(chatbot_api)
 
 # Configure Upload Folder
 #UPLOAD_FOLDER = 'static/uploads'
@@ -40,36 +43,64 @@ def home():
 # Citizen Authentication Routes
 @app.route('/citizen-login', methods=['GET', 'POST'])
 def citizen_login():
+    # Check for existing sessions across different user types
+    # No need to redirect if already logged in - template will handle display logic
+    
+    errors = {}
+    username = ''
+    
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        # Form validation
+        if not username:
+            errors['username'] = 'Username is required'
+        if not password:
+            errors['password'] = 'Password is required'
+            
+        if errors:
+            return render_template('clogin3.html', username=username, errors=errors)
 
         db = get_db_connection()
-        cursor = db.cursor()
+        cursor = db.cursor(dictionary=True)
         
-        # Check if the username exists
-        cursor.execute("SELECT id, password FROM citizens WHERE username = %s", (username,))
-        user = cursor.fetchone()
-        
-        if user:
-            user_id, hashed_password = user
+        try:
+            # Check if the username exists
+            cursor.execute("SELECT id, username, password FROM citizens WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            
+            if not user:
+                flash("Username not found. Please check your username or sign up.", "warning")
+                return render_template('clogin3.html', username=username)
+            
             # Verify the hashed password
-            if check_password_hash(hashed_password, password):
-                session['user_id'] = user_id  # Store user ID
-                session['username'] = username  # Store username
-                flash(f"Welcome, {username}!", "success")
-                cursor.close()
-                db.close()
-                return redirect(url_for('cdashboard'))  # Redirect to dashboard
+            if check_password_hash(user['password'], password):
+                # Clear any existing sessions before setting new one
+                session.clear()
+                
+                # Set new session
+                session['user_id'] = user['id']
+                session['username'] = user['username']
+                session['role'] = 'citizen'  # Add role for easier identification
+                
+                flash(f"Welcome back, {user['username']}!", "success")
+                return redirect(url_for('cdashboard'))
             else:
-                flash("Incorrect password! Please try again.", "danger")
-        else:
-            flash("Username does not exist! Please sign up first.", "warning")
-        
-        cursor.close()
-        db.close()
+                flash("Incorrect password. Please try again.", "danger")
+                return render_template('clogin3.html', username=username)
+                
+        except mysql.connector.Error as err:
+            app.logger.error(f"Database error during login: {str(err)}")
+            flash("A system error occurred. Please try again later.", "danger")
+            return render_template('clogin3.html', username=username)
+            
+        finally:
+            cursor.close()
+            db.close()
 
-    return render_template('clogin3.html')
+    # GET request or failed POST with preserved username
+    return render_template('clogin3.html', username=username, errors=errors)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -136,30 +167,61 @@ def cdashboard():
 
 @app.route('/track-grievance')
 def track_grievance():
-    if 'user_id' not in session:  # Check if user is logged in
+    if 'user_id' not in session:
         flash("Please log in first!", "warning")
         return redirect(url_for('citizen_login'))
     
-    username = session['username']
+    status_filter = request.args.get('status', 'all')
+    date_filter = request.args.get('date', 'all')
     
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     
-    # Fetch grievances of logged-in user
-    cursor.execute("SELECT id, location, description, status, submitted_at, photo_path FROM grievances WHERE user_id = %s", (session['user_id'],))
+    # Base query
+    query = """
+        SELECT id, location, description, status, submitted_at, photo_path 
+        FROM grievances 
+        WHERE user_id = %s
+    """
+    params = [session['user_id']]
+    
+    # Apply status filter
+    if status_filter != 'all':
+        query += " AND status = %s"
+        params.append(status_filter)
+    
+    # Apply date filter
+    if date_filter != 'all':
+        if date_filter == 'week':
+            query += " AND submitted_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+        elif date_filter == 'month':
+            query += " AND submitted_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+        elif date_filter == 'year':
+            query += " AND submitted_at >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)"
+    
+    query += " ORDER BY submitted_at DESC"
+    
+    cursor.execute(query, params)
     grievances = cursor.fetchall()
     
     cursor.close()
     db.close()
     
-    return render_template('viewstatus.html', username=username, grievances=grievances)
+    return render_template('viewstatus.html', grievances=grievances)
 
 # Admin Routes
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
+    # Check if user is already logged in as citizen or contractor
+    # No need to redirect - template will handle display logic
+    
     if request.method == 'POST':
         government_id = request.form['government_id']
         password = request.form['password']
+
+        if not government_id or not password:
+            flash("Both Government ID and password are required", "danger")
+            return render_template('alogin.html')
 
         db = get_db_connection()
         cursor = db.cursor()
@@ -174,8 +236,14 @@ def admin_login():
 
             admin_id, hashed_password = admin
             if check_password_hash(hashed_password, password):
+                # Clear any existing sessions before setting new one
+                session.clear()
+                
+                # Set new session
                 session['admin_id'] = admin_id
                 session['government_id'] = government_id
+                session['role'] = 'admin'  # Add role for easier identification
+                
                 flash(f"Welcome, {government_id}!", "success")
                 return redirect(url_for('manage_issues'))
             else:
@@ -195,8 +263,7 @@ def manage_issues():
         return redirect(url_for('admin_login'))
 
     # Get filter parameters
-    status_filter = request.args.get('status', 'all')
-    location_filter = request.args.get('location', 'all')
+    status_filter = request.args.get('status_filter', 'all')
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
@@ -206,17 +273,9 @@ def manage_issues():
     params = []
     
     # Apply filters
-    conditions = []
     if status_filter != 'all':
-        conditions.append("status = %s")
+        query += " WHERE status = %s"
         params.append(status_filter)
-    
-    if location_filter != 'all':
-        conditions.append("location LIKE %s")
-        params.append(f"%{location_filter}%")
-    
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
     
     # Execute query
     cursor.execute(query, params)
@@ -242,8 +301,7 @@ def manage_issues():
                            Resolved_tasks=Resolved_tasks,
                            status_counts=status_counts, 
                            contractors=contractors,
-                           status_filter=status_filter,
-                           location_filter=location_filter)
+                           status_filter=status_filter)
 
 @app.route('/assign_contractor', methods=['POST'])
 def assign_contractor():
@@ -347,35 +405,56 @@ def update_status(grievance_id):
 # Contractor Routes
 @app.route('/contractor-login', methods=['GET', 'POST'])
 def contractor_login():
+    errors = {}
+    username = ''
+    
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        # Basic validation
+        if not username:
+            errors['username'] = 'Username is required'
+        if not password:
+            errors['password'] = 'Password is required'
+            
+        if errors:
+            return render_template('blogin.html', username=username, errors=errors)
 
         db = get_db_connection()
-        cursor = db.cursor()
-
-        # Check if the contractor exists
-        cursor.execute("SELECT id, password FROM contractors WHERE username = %s", (username,))
-        contractor = cursor.fetchone()
+        cursor = db.cursor(dictionary=True)
         
-        if contractor:
-            contractor_id, hashed_password = contractor
-            if check_password_hash(hashed_password, password):
-                session['contractor_id'] = contractor_id
-                session['contractor_username'] = username
-                flash(f"Welcome, {username}!", "success")
-                cursor.close()
-                db.close()
+        try:
+            # Check contractor exists
+            cursor.execute("SELECT id, username, password FROM contractors WHERE username = %s", (username,))
+            contractor = cursor.fetchone()
+            
+            if not contractor:
+                flash("Username not found.", "warning")
+                return render_template('blogin.html', username=username)
+            
+            # Verify password
+            if check_password_hash(contractor['password'], password):
+                session.clear()
+                session['contractor_id'] = contractor['id']
+                session['contractor_username'] = contractor['username']
+                session['role'] = 'contractor'
+                flash(f"Welcome, {contractor['username']}!", "success")
                 return redirect(url_for('contractor_dashboard'))
             else:
-                flash("Incorrect password! Please try again.", "danger")
-        else:
-            flash("Username does not exist! Please sign up first.", "warning")
-        
-        cursor.close()
-        db.close()
+                flash("Incorrect password.", "danger")
+                return render_template('blogin.html', username=username)
+                
+        except mysql.connector.Error as err:
+            app.logger.error(f"Database error: {err}")
+            flash("System error. Please try again.", "danger")
+            return render_template('blogin.html', username=username)
+            
+        finally:
+            cursor.close()
+            db.close()
 
-    return render_template('blogin.html')
+    return render_template('blogin.html', username=username, errors=errors)
 
 @app.route('/contractor-dashboard')
 def contractor_dashboard():
@@ -447,37 +526,51 @@ def update_task_status():
     if 'contractor_id' not in session:
         flash("Please log in first!", "warning")
         return redirect(url_for('contractor_login'))
-        
+    
     task_id = request.form.get('task_id')
     new_status = request.form.get('status')
-    
-    if task_id and new_status:
-        db = get_db_connection()
-        cursor = db.cursor()
-        
-        # If contractor is marking as "Resolved", set needs_verification flag
+    completion_proof = request.files.get('completion_proof')
+
+    if not task_id or not new_status:
+        flash("Missing required data!", "danger")
+        return redirect(url_for('contractor_dashboard'))
+
+    db = get_db_connection()
+    cursor = db.cursor()
+
+    try:
+        # Upload completion proof to Cloudinary if provided
+        proof_url = None
+        if completion_proof and completion_proof.filename:
+            upload_result = cloudinary.uploader.upload(completion_proof)
+            proof_url = upload_result['secure_url']
+
         if new_status == 'Resolved':
             cursor.execute("""
                 UPDATE grievances 
                 SET status = 'Resolved', 
                     needs_verification = 1,
+                    completion_proof_url = %s,
                     revision_requested = 0,
-                    completed_at = NOW() 
+                    completed_at = NOW()
                 WHERE id = %s AND contractor_id = %s
-            """, (task_id, session['contractor_id']))
+            """, (proof_url, task_id, session['contractor_id']))
         else:
-            cursor.execute("UPDATE grievances SET status = %s WHERE id = %s AND contractor_id = %s", 
-                        (new_status, task_id, session['contractor_id']))
+            cursor.execute("""
+                UPDATE grievances 
+                SET status = %s 
+                WHERE id = %s AND contractor_id = %s
+            """, (new_status, task_id, session['contractor_id']))
         
         db.commit()
+        flash("Task marked as Resolved and sent for admin verification!", "success")
+    except Exception as e:
+        db.rollback()
+        flash(f"Error updating task: {str(e)}", "danger")
+    finally:
         cursor.close()
         db.close()
-        
-        if new_status == 'Resolved':
-            flash("Task marked as Resolved and sent for admin verification!", "success")
-        else:
-            flash(f"Task marked as {new_status}!", "success")
-        
+
     return redirect(url_for('contractor_dashboard'))
 
 # Grievance Management Routes
@@ -535,13 +628,182 @@ def submit_grievance():
 
     return redirect(url_for('cdashboard'))
 
+# Add these routes to app.py
+
+@app.route('/submit-feedback', methods=['POST'])
+def submit_feedback():
+    if 'user_id' not in session:
+        flash("Please log in first!", "warning")
+        return redirect(url_for('citizen_login'))
+        
+    user_id = session['user_id']
+    feedback_text = request.form.get('feedback_text')
+    rating = request.form.get('rating')
+    
+    # Basic validation
+    if not feedback_text:
+        flash("Feedback text is required!", "danger")
+        return redirect(url_for('view_feedback'))
+    
+    if rating:
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                flash("Rating must be between 1 and 5", "danger")
+                return redirect(url_for('view_feedback'))
+        except ValueError:
+            flash("Rating must be a number", "danger")
+            return redirect(url_for('view_feedback'))
+    
+    db = get_db_connection()
+    cursor = db.cursor()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO feedback (user_id, feedback_text, rating)
+            VALUES (%s, %s, %s)
+        """, (user_id, feedback_text, rating))
+        db.commit()
+        flash("Thank you for your feedback!", "success")
+    except mysql.connector.Error as err:
+        flash(f"Database error: {err}", "danger")
+    finally:
+        cursor.close()
+        db.close()
+    
+    return redirect(url_for('cdashboard'))
+
+@app.route('/view-feedback')
+def view_feedback():
+    if 'user_id' not in session:
+        flash("Please log in first!", "warning")
+        return redirect(url_for('citizen_login'))
+    
+    username = session['username']
+    
+    # Get user's past feedback
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT id, feedback_text, rating, submitted_at
+        FROM feedback
+        WHERE user_id = %s
+        ORDER BY submitted_at DESC
+    """, (session['user_id'],))
+    
+    user_feedback = cursor.fetchall()
+    
+    cursor.close()
+    db.close()
+    
+    return render_template('feedback.html', username=username, user_feedback=user_feedback)
+
+# Admin view for all feedback
+@app.route('/admin-feedback')
+def admin_feedback():
+    if 'admin_id' not in session:
+        flash("Please log in first!", "warning")
+        return redirect(url_for('admin_login'))
+    
+    # Get filter parameters
+    rating_filter = request.args.get('rating', 'all')
+    date_filter = request.args.get('date', 'all')
+    
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    
+    # Base query
+    query = """
+        SELECT f.id, f.feedback_text, f.rating, f.submitted_at, 
+               c.username, c.first_name, c.last_name
+        FROM feedback f
+        JOIN citizens c ON f.user_id = c.id
+    """
+    
+    params = []
+    conditions = []
+    
+    # Apply filters
+    if rating_filter != 'all':
+        conditions.append("f.rating = %s")
+        params.append(int(rating_filter))
+    
+    if date_filter != 'all':
+        if date_filter == 'today':
+            conditions.append("DATE(f.submitted_at) = CURDATE()")
+        elif date_filter == 'week':
+            conditions.append("f.submitted_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)")
+        elif date_filter == 'month':
+            conditions.append("f.submitted_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)")
+    
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    
+    query += " ORDER BY f.submitted_at DESC"
+    
+    cursor.execute(query, params)
+    all_feedback = cursor.fetchall()
+    
+    # Calculate statistics
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as total_count,
+            AVG(rating) as avg_rating,
+            SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star,
+            SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star,
+            SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star,
+            SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star,
+            SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star
+        FROM feedback
+    """)
+    
+    stats = cursor.fetchone()
+    
+    cursor.close()
+    db.close()
+    
+    return render_template(
+        'feedbackview.html', 
+        all_feedback=all_feedback, 
+        stats=stats,
+        rating_filter=rating_filter,
+        date_filter=date_filter
+    )
+
 # Authentication Management
 @app.route('/logout')
 def logout():
-    # Clear all session data
-    session.clear()
-    flash("Logged out successfully!", "info")
-    return redirect(url_for('home'))
+    try:
+        # Check if user is actually logged in before attempting logout
+        if 'user_id' in session or 'admin_id' in session or 'contractor_id' in session:
+            # Store the role for the success message
+            role = session.get('role', 'user')
+            
+            # Clear all session data
+            session.clear()
+            
+            # Success message
+            flash(f"Logged out successfully!", "success")
+        else:
+            # User wasn't logged in
+            flash("No active session to log out from.", "warning")
+            
+        return redirect(url_for('home'))
+        
+    except Exception as e:
+        # Log the error
+        app.logger.error(f"Error during logout: {str(e)}")
+        
+        # Clear session anyway as a precaution
+        try:
+            session.clear()
+        except:
+            pass
+            
+        # Inform the user
+        flash("An error occurred during logout. Please try again or contact support if the issue persists.", "danger")
+        return redirect(url_for('home'))
 
 if __name__ == '__main__':
     app.run(debug=True)
