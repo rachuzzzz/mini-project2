@@ -5,8 +5,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import cloudinary
 import cloudinary.uploader
-#import cloudinary.api
-#from bot import chatbot_api
+import cloudinary.api
+from bot import chatbot_api
 
 
 # Cloudinary configuration
@@ -18,13 +18,7 @@ cloudinary.config(
 
 app = Flask(__name__)
 app.secret_key = '123456'  # Secret key for session management
-#app.register_blueprint(chatbot_api)
-
-# Configure Upload Folder
-#UPLOAD_FOLDER = 'static/uploads'
-#if not os.path.exists(UPLOAD_FOLDER):
-#    os.makedirs(UPLOAD_FOLDER)  # Create folder if not exists
-#app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.register_blueprint(chatbot_api)
 
 # Database connection
 def get_db_connection():
@@ -593,12 +587,25 @@ def submit_grievance():
     latitude = request.form.get('latitude')
     longitude = request.form.get('longitude')
     description = request.form.get('description')
-    phone = request.form.get('phone')
     photo = request.files.get('photo')
 
-    if not all([location, latitude, longitude, description, phone]):
+    if not all([location, latitude, longitude, description]):
         flash("All fields are required!", "danger")
         return redirect(url_for('report_issue'))
+        
+    # Fetch phone number from the citizen table instead of form input
+    db = get_db_connection()
+    cursor = db.cursor()
+    cursor.execute("SELECT phone_number FROM citizens WHERE id = %s", (user_id,))
+    result = cursor.fetchone()
+    
+    if not result:
+        flash("Error retrieving user information!", "danger")
+        cursor.close()
+        db.close()
+        return redirect(url_for('report_issue'))
+        
+    phone = result[0]  # Get phone number from database
 
     # Upload image to Cloudinary
     photo_url = None
@@ -610,9 +617,6 @@ def submit_grievance():
             flash(f"Error uploading image: {str(e)}", "danger")
             # Continue without the photo if upload fails
 
-    db = get_db_connection()
-    cursor = db.cursor()
-    
     try:
         cursor.execute("""
             INSERT INTO grievances (user_id, location, latitude, longitude, description, phone, photo_path, status)
@@ -806,4 +810,47 @@ def logout():
         return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Certificate files path - we'll generate these
+    cert_path = 'cert.pem'
+    key_path = 'key.pem'
+    
+    # Check if certificate files exist, create them if not
+    if not (os.path.exists(cert_path) and os.path.exists(key_path)):
+        # Generate self-signed certificate
+        from OpenSSL import crypto
+        
+        # Create a key pair
+        k = crypto.PKey()
+        k.generate_key(crypto.TYPE_RSA, 2048)
+        
+        # Create a self-signed cert
+        cert = crypto.X509()
+        cert.get_subject().C = "US"
+        cert.get_subject().ST = "State"
+        cert.get_subject().L = "Locality"
+        cert.get_subject().O = "Organization"
+        cert.get_subject().OU = "Organizational Unit"
+        cert.get_subject().CN = "localhost"
+        cert.set_serial_number(1000)
+        cert.gmtime_adj_notBefore(0)
+        cert.gmtime_adj_notAfter(365*24*60*60)  # 1 year validity
+        cert.set_issuer(cert.get_subject())
+        cert.set_pubkey(k)
+        cert.sign(k, 'sha256')
+        
+        # Write certificate
+        with open(cert_path, "wb") as f:
+            f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+        
+        # Write private key
+        with open(key_path, "wb") as f:
+            f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
+        
+        print(f"Generated self-signed certificate: {cert_path} and {key_path}")
+    
+    # Run with HTTPS
+    app.run(
+        debug=True,
+        host='0.0.0.0',  # Allow access from all interfaces
+        ssl_context=(cert_path, key_path)
+    )
