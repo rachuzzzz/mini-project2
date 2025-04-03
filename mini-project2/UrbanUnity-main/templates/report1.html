@@ -155,10 +155,6 @@
         <label for="description">Grievance Description</label>
         <textarea id="description" name="description" rows="4" placeholder="Describe your grievance here" required></textarea>
     
-        <!-- Phone Number -->
-        <label for="phone">Phone Number</label>
-        <input type="text" id="phone" name="phone" placeholder="Enter phone number" required>
-    
         <!-- Upload Photo -->
         <label for="photo">Upload Photo</label>
         <input type="file" id="photo" name="photo" accept="image/*" required>
@@ -234,19 +230,63 @@
     });
 
     // Use Geolocation API if available to automatically fetch user's location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          var userLat = position.coords.latitude;
-          var userLng = position.coords.longitude;
-          map.setView([userLat, userLng], 18);
-          setMarker(userLat, userLng);
-        },
-        function() {
-          alert("Geolocation denied. Select location manually.");
-        }
-      );
-    }
+    // Use Geolocation API if available to automatically fetch user's location
+if (navigator.geolocation) {
+  // Add a timeout option to the geolocation request
+  var options = {
+    enableHighAccuracy: true,
+    timeout: 5000,
+    maximumAge: 0
+  };
+  
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      var userLat = position.coords.latitude;
+      var userLng = position.coords.longitude;
+      
+      // Check if the coordinates are within Kerala bounds before setting
+      if (userLat >= keralaBounds[0][0] && userLat <= keralaBounds[1][0] &&
+          userLng >= keralaBounds[0][1] && userLng <= keralaBounds[1][1]) {
+        map.setView([userLat, userLng], 18);
+        setMarker(userLat, userLng);
+        console.log("Location detected:", userLat, userLng);
+      } else {
+        console.log("Location outside Kerala bounds, using default");
+        // Use default location for Kerala (Ernakulam)
+        map.setView([9.9816, 76.2999], 12);
+        setMarker(9.9816, 76.2999);
+      }
+    },
+    function(error) {
+      console.error("Geolocation error:", error.code, error.message);
+      // Use default location for Kerala (Ernakulam) as fallback
+      map.setView([9.9816, 76.2999], 12);
+      setMarker(9.9816, 76.2999);
+      
+      // Show appropriate error message based on error code
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          alert("Geolocation request denied. Using default location.");
+          break;
+        case error.POSITION_UNAVAILABLE:
+          alert("Location information unavailable. Using default location.");
+          break;
+        case error.TIMEOUT:
+          alert("Location request timed out. Using default location.");
+          break;
+        default:
+          alert("Unknown geolocation error. Using default location.");
+          break;
+      }
+    },
+    options
+  );
+} else {
+  alert("Geolocation is not supported by this browser. Please select your location manually.");
+  // Use default location
+  map.setView([9.9816, 76.2999], 12);
+  setMarker(9.9816, 76.2999);
+}
 
     map.on('click', function(e) {
       setMarker(e.latlng.lat, e.latlng.lng);
